@@ -1,5 +1,6 @@
 #include "red_black_tree.h"
 
+
 int createRBNode(struct RBTree *tree, struct pcb_t *data, struct RBNode **out_node) {
     if (!tree || !out_node) return -1;
     struct RBNode *node = (struct RBNode *)malloc(sizeof(struct RBNode));
@@ -120,10 +121,14 @@ int insert(struct RBTree *tree, struct pcb_t *data) {
 }
 
 int initializeRBTree(struct RBTree **tree, int (*compare)(struct pcb_t *, struct pcb_t *)) {
-    if (!tree || !compare) return -1;
+    if (!tree || !compare) {
+        return -1;
+    }
 
     *tree = (struct RBTree *)malloc(sizeof(struct RBTree));
-    if (!*tree) return -1;
+    if (!*tree) {
+        return -1;
+    }
 
     (*tree)->TNULL = (struct RBNode *)malloc(sizeof(struct RBNode));
     if (!(*tree)->TNULL) {
@@ -255,17 +260,57 @@ int _remove(struct RBTree *tree, struct RBNode *z) {
 }
 
 int insertRBTree(struct RBTree* tree, struct pcb_t* data) {
-    if (insert(tree, data) < 0) return -1;
-    else return 0;
+    int val = insert(tree, data);
+
+    return val;
 }
 
 int removeminRBTree(struct RBTree *tree, struct pcb_t **data) {
     if (!tree || !data) return -1;
 
+
     struct RBNode* min_node = tree_minimum(tree, tree->root);
-    if (!min_node || min_node == tree->TNULL) return -1;
+    if (!min_node || min_node == tree->TNULL) {
+        return -1;
+    }
 
     *data = min_node->data;
+    int val = _remove(tree, min_node);
 
-    return _remove(tree, min_node);
+    return val;
+}
+
+int remove_by_search(struct RBTree* tree, int (*findFunc)(struct pcb_t*), struct pcb_t** data) {
+    if (!tree || !findFunc || !data) return -1;
+
+    struct RBNode* stack[100];
+    int top = -1;
+    struct RBNode* current = tree->root;
+
+    if (current == tree->TNULL) return -1;
+
+    stack[++top] = current;
+
+    while (top >= 0) {
+        current = stack[top--];
+
+        if (current == tree->TNULL) continue;
+
+        if (findFunc(current->data)) {
+            *data = current->data;
+            return _remove(tree, current);
+        }
+
+        if (current->right != tree->TNULL)
+            stack[++top] = current->right;
+        if (current->left != tree->TNULL)
+            stack[++top] = current->left;
+    }
+
+    return -1;
+}
+
+int removeRBTree(struct RBTree* tree, int (*findFunc)(struct pcb_t*), struct pcb_t** data) {
+    int val = remove_by_search(tree, findFunc, data);
+    return val;
 }

@@ -175,7 +175,7 @@ static void * ld_routine(void * args) {
 #endif
 
 #ifdef CFS_SCHED
-		printf("\tLoaded a process at %s, PID: %d NICENESS: %d\n",
+		printf("\tLoaded a process at %s, PID: %d, NICENESS: %d\n",
 			ld_processes.path[i], proc->pid, ld_processes.niceness[i]);
 #elif MLQ_SCHED
 		printf("\tLoaded a process at %s, PID: %d PRIO: %ld\n",

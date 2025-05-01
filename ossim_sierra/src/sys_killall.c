@@ -15,6 +15,9 @@
  #include "queue.h" //????????????????
  #include "stdlib.h" //????????????????
  #include "sched.h" //????????????????
+ #include "red_black_tree.h"
+
+ char * name = NULL;
  
  int check_name(char *proc_name, char *path)
  {
@@ -38,6 +41,10 @@
      }
  
      return same_name;
+ }
+
+ int find_pcb(struct pcb_t *proc) {
+    return check_name(name, proc->path);
  }
  
  int kill_in_queue(struct queue_t *proc_queue, char *proc_name)
@@ -88,6 +95,7 @@
          if(data == -1) proc_name[i]='\0';
          i++;
      }
+     name = proc_name;
  
      printf("The procname retrieved from memregionid %d is \"%s\"\n", memrg, proc_name);
  
@@ -102,23 +110,32 @@
      if (running_list != NULL) {
          killed_count += kill_in_queue(running_list, proc_name);
      }
- 
-    //  #ifdef MLQ_SCHED
-    //      struct queue_t *mlq_ready_queue = caller->mlq_ready_queue;
-    //      if (mlq_ready_queue != NULL) {
-    //          for (int i = 0; i < MAX_PRIO; ++i) {
-    //              struct queue_t *queue = &(mlq_ready_queue[i]);
-    //              if (queue != NULL) {
-    //                  killed_count += kill_in_queue(queue, proc_name);
-    //              }
-    //          }
-    //      }
-    //  #else
-    //      struct queue_t *ready_queue = caller->ready_queue;
-    //      if (ready_queue != NULL) {
-    //          killed_count += kill_in_queue(ready_queue, proc_name);
-    //      }
-    //  #endif
+
+     #ifdef CFS_SCHED
+        struct RBTree *pcb_tree = caller->pcb_tree;
+        struct pcb_t *proc = NULL;
+        
+        while (removeRBTree(pcb_tree, find_pcb, &proc) == 0) {
+            delete_pcb(proc);
+            free(proc);
+            ++killed_count;
+        }
+     #elif MLQ_SCHED
+         struct queue_t *mlq_ready_queue = caller->mlq_ready_queue;
+         if (mlq_ready_queue != NULL) {
+             for (int i = 0; i < MAX_PRIO; ++i) {
+                 struct queue_t *queue = &(mlq_ready_queue[i]);
+                 if (queue != NULL) {
+                     killed_count += kill_in_queue(queue, proc_name);
+                 }
+             }
+         }
+     #else
+         struct queue_t *ready_queue = caller->ready_queue;
+         if (ready_queue != NULL) {
+             killed_count += kill_in_queue(ready_queue, proc_name);
+         }
+     #endif
  
      /* TODO Maching and terminating 
       *       all processes with given
