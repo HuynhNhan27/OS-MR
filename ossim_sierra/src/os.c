@@ -102,7 +102,7 @@ static void * cpu_routine(void * args) {
 			/* The porcess has finish it job */
 			printf("\tCPU %d: Processed %2d has finished\n",
 				id ,proc->pid);
-			waiting_time[proc->pid] = current_time() - waiting_time[proc->pid];
+			waiting_time[proc->pid] = current_time() - waiting_time[proc->pid] - proc->code->size;
 			remove_pcb(proc);
 			proc = get_proc();
 			time_left = 0;
@@ -185,7 +185,7 @@ static void * ld_routine(void * args) {
 			printf("\tLoaded a process at %s, PID: %d PRIO: %ld\n",
 				ld_processes.path[i], proc->pid, ld_processes.prio[i]);
 #endif
-			waiting_time[proc->pid] = current_time();
+			waiting_time[proc->pid] = ld_processes.start_time[i];
 			add_proc(proc);
 			free(ld_processes.path[i]);
 			i++;

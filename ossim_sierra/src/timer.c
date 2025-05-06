@@ -128,7 +128,7 @@ void stop_timer() {
 	timer_stop = 1;
 	//printf("        End\n");
 	printf("============================================\n");
-	printf("Total waiting time: %ld\n", current_time());
+	printf("Turnaround time: %ld\n", current_time());
 	pthread_join(_timer, NULL);
 	while (dev_list != NULL) {
 		struct timer_id_container_t * temp = dev_list;
