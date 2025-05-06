@@ -1,4 +1,5 @@
 
+#include <math.h>
 #include "cpu.h"
 #include "timer.h"
 #include "sched.h"
@@ -9,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <math.h>
+
 
 static int time_slot;
 static int num_cpus;
@@ -30,6 +31,9 @@ struct mmpaging_ld_args {
 	struct timer_id_t  *timer_id;
 };
 #endif
+
+static int * waiting_time;
+int wait_for_loading = 1;
 
 static struct ld_args{
 	char ** path;
@@ -80,6 +84,7 @@ static void * cpu_routine(void * args) {
 	int time_left = 0;
 	struct pcb_t * proc = NULL;
 	while (1) {
+		while(wait_for_loading && !done);
 		/* Check the status of current process */
 		if (proc == NULL) {
 			/* No process is running, the we load new process from
@@ -97,6 +102,7 @@ static void * cpu_routine(void * args) {
 			/* The porcess has finish it job */
 			printf("\tCPU %d: Processed %2d has finished\n",
 				id ,proc->pid);
+			waiting_time[proc->pid] = current_time() - waiting_time[proc->pid];
 			remove_pcb(proc);
 			proc = get_proc();
 			time_left = 0;
@@ -136,7 +142,6 @@ static void * cpu_routine(void * args) {
 		// 	proc = NULL;
 		// 	time_left = 0;
 		// }
-
 		next_slot(timer_id);
 	}
 	detach_event(timer_id);
@@ -144,6 +149,7 @@ static void * cpu_routine(void * args) {
 }
 
 static void * ld_routine(void * args) {
+	while(current_time() != 0);
 #ifdef MM_PAGING
 	struct memphy_struct* mram = ((struct mmpaging_ld_args *)args)->mram;
 	struct memphy_struct** mswp = ((struct mmpaging_ld_args *)args)->mswp;
@@ -155,36 +161,36 @@ static void * ld_routine(void * args) {
 	int i = 0;
 	printf("ld_routine\n");
 	while (i < num_processes) {
-		struct pcb_t * proc = load(ld_processes.path[i]);
+		while (i < num_processes && current_time() >= ld_processes.start_time[i]) {
+			struct pcb_t * proc = load(ld_processes.path[i]);
 #ifdef CFS_SCHED
-		proc->niceness = ld_processes.niceness[i];
-		proc->pcb_tree = NULL;
-		proc->weight = 1024.0 * pow(2.0, -(proc->niceness / 10.0));
+					proc->niceness = ld_processes.niceness[i];
+					proc->pcb_tree = NULL;
+					proc->weight = 1024.0 * pow(2.0, -(proc->niceness / 10.0));
 #elif MLQ_SCHED
-		proc->prio = ld_processes.prio[i];
+					proc->prio = ld_processes.prio[i];
 #endif
-		while (current_time() < ld_processes.start_time[i]) {
-			next_slot(timer_id);
-		}
 #ifdef MM_PAGING
-		proc->mm = malloc(sizeof(struct mm_struct));
-		init_mm(proc->mm, proc);
-		proc->mram = mram;
-		proc->mswp = mswp;
-		proc->active_mswp = active_mswp;
+			proc->mm = malloc(sizeof(struct mm_struct));
+			init_mm(proc->mm, proc);
+			proc->mram = mram;
+			proc->mswp = mswp;
+			proc->active_mswp = active_mswp;
 #endif
 
 #ifdef CFS_SCHED
-		printf("\tLoaded a process at %s, PID: %d, NICENESS: %d\n",
-			ld_processes.path[i], proc->pid, ld_processes.niceness[i]);
+			printf("\tLoaded a process at %s, PID: %d, NICENESS: %d\n",
+				ld_processes.path[i], proc->pid, ld_processes.niceness[i]);
 #elif MLQ_SCHED
-		printf("\tLoaded a process at %s, PID: %d PRIO: %ld\n",
-			ld_processes.path[i], proc->pid, ld_processes.prio[i]);
+			printf("\tLoaded a process at %s, PID: %d PRIO: %ld\n",
+				ld_processes.path[i], proc->pid, ld_processes.prio[i]);
 #endif
-
-		add_proc(proc);
-		free(ld_processes.path[i]);
-		i++;
+			waiting_time[proc->pid] = current_time();
+			add_proc(proc);
+			free(ld_processes.path[i]);
+			i++;
+		}
+		wait_for_loading = 0;
 		next_slot(timer_id);
 	}
 	free(ld_processes.path);
@@ -233,6 +239,7 @@ static void read_config(const char * path) {
 
 #ifdef CFS_SCHED
 	ld_processes.niceness = (int*)malloc(sizeof(int) * num_processes);
+	waiting_time = (int*)malloc(sizeof(int) * (num_processes + 1));
 #elif MLQ_SCHED
 	ld_processes.prio = (unsigned long*)
 		malloc(sizeof(unsigned long) * num_processes);
@@ -303,7 +310,7 @@ int main(int argc, char * argv[]) {
 	mm_ld_args->mram = (struct memphy_struct *) &mram;
 	mm_ld_args->mswp = (struct memphy_struct**) &mswp;
 	mm_ld_args->active_mswp = (struct memphy_struct *) &mswp[0];
-        mm_ld_args->active_mswp_id = 0;
+    mm_ld_args->active_mswp_id = 0;
 #endif
 
 	/* Init scheduler */
@@ -328,6 +335,17 @@ int main(int argc, char * argv[]) {
 
 	/* Stop timer */
 	stop_timer();
+
+
+#ifdef CFS_SCHED
+	double avg = 0;
+	for (int i = 1; i <= num_processes; ++i) {
+		printf("Process %d: %d\n", i, waiting_time[i]);
+		avg += waiting_time[i];
+	}
+	avg /= num_processes;
+	printf("Average waiting time: %f\n", avg);
+#endif
 
 #ifdef MM_PAGING
 	/* Free all MEMPHY */

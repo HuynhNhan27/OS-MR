@@ -12,15 +12,19 @@ struct timer_id_container_t {
 
 static struct timer_id_container_t * dev_list = NULL;
 
-static uint64_t _time;
+static int _time = -1;
 
 static int timer_started = 0;
 static int timer_stop = 0;
 
+extern int wait_for_loading;
+
 
 static void * timer_routine(void * args) {
+	printf("Time slot %3lu\n", current_time() + 1);
+	_time = 0;
 	while (!timer_stop) {
-		printf("Time slot %3llu\n", current_time());
+		
 		int fsh = 0;
 		int event = 0;
 		/* Wait for all devices have done the job in current
@@ -41,8 +45,14 @@ static void * timer_routine(void * args) {
 			pthread_mutex_unlock(&temp->id.event_lock);
 		}
 
+		if (fsh == event) {
+			break;
+		}
+
 		/* Increase the time slot */
+		wait_for_loading = 1;
 		_time++;
+		printf("Time slot %3lu\n", current_time());
 		
 		/* Let devices continue their job */
 		for (temp = dev_list; temp != NULL; temp = temp->next) {
@@ -50,9 +60,6 @@ static void * timer_routine(void * args) {
 			temp->id.done = 0;
 			pthread_cond_signal(&temp->id.timer_cond);
 			pthread_mutex_unlock(&temp->id.timer_lock);
-		}
-		if (fsh == event) {
-			break;
 		}
 	}
 	pthread_exit(args);
@@ -77,7 +84,7 @@ void next_slot(struct timer_id_t * timer_id) {
 }
 
 uint64_t current_time() {
-	return _time;
+	return (uint64_t)_time;
 }
 
 void start_timer() {
@@ -119,6 +126,9 @@ struct timer_id_t * attach_event() {
 
 void stop_timer() {
 	timer_stop = 1;
+	//printf("        End\n");
+	printf("============================================\n");
+	printf("Total waiting time: %ld\n", current_time());
 	pthread_join(_timer, NULL);
 	while (dev_list != NULL) {
 		struct timer_id_container_t * temp = dev_list;

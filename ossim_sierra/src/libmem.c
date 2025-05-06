@@ -220,7 +220,7 @@
    { /* Page is not online, make it actively living */
      int vicpgn, swpfpn; 
      int vicfpn;
-     uint32_t vicpte;
+     //uint32_t vicpte;
  
      int tgtfpn = PAGING_PTE_SWP(pte);//the target frame storing our variable
  

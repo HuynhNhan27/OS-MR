@@ -107,7 +107,7 @@
      fpit = frames;
      pte_set_fpn(&caller->mm->pgd[pgn + pgit], fpit -> fpn);
      frames = frames->fp_next;
-     free(fpit);
+     //free(fpit);
     /* Tracking for later page replacement activities (if needed)
      * Enqueue new usage page */
      enlist_pgn_node(&caller->mm->fifo_pgn, pgn + pgit);
