@@ -63,7 +63,6 @@ struct pcb_t * get_cfs_proc(void) {
 	pthread_mutex_lock(&queue_lock);
 
 	if (removeminRBTree(pcb_tree, &proc) == 0) {
-		proc->time_slice = target_latency;
 		proc->running_list = &running_list;
 		enqueue(&running_list, proc);
 
@@ -101,11 +100,10 @@ void put_proc(struct pcb_t * proc) {
 	pthread_mutex_lock(&queue_lock);
 
 	total_weight += proc->weight;
-	insertRBTree(pcb_tree, proc);
 	remove_proc(&running_list, proc);
 	proc->running_list = NULL;
-
 	proc->vruntime += 1.0 * proc->time_slice / proc->weight;
+	insertRBTree(pcb_tree, proc);
 
 	pthread_mutex_unlock(&queue_lock);
 }
@@ -116,6 +114,7 @@ void add_proc(struct pcb_t * proc) {
 
 	proc->pcb_tree = pcb_tree;
 	total_weight += proc->weight;
+	proc->vruntime = 0;
 	insertRBTree(pcb_tree, proc);
 
 	pthread_mutex_unlock(&queue_lock);	
