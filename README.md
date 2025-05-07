@@ -1,4 +1,4 @@
-# Operating System Honored Program Exercise – CO2017 HK242
+# Operating System Honored Program Exercise – CO201D HK242
 
 ## Sinh viên thực hiện:
 - Nguyễn Thiện Minh – 2312097  
