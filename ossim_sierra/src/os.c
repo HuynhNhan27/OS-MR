@@ -16,6 +16,7 @@ static int time_slot;
 static int num_cpus;
 static int done = 0;
 static int finished = 0;
+static int swap = 0;
 
 #ifdef MM_PAGING
 static int memramsz;
@@ -126,6 +127,7 @@ static void * cpu_routine(void * args) {
 			next_slot(timer_id);
 			continue;
 		}else if (time_left == 0) {
+			swap++;
 			printf("\tCPU %d: Dispatched process %2d\n",
 				id, proc->pid);
 			time_left = proc->time_slice;
@@ -135,13 +137,6 @@ static void * cpu_routine(void * args) {
 		run(proc);
 		time_left--;
 
-		// if (proc->running_list == NULL) {
-		// 	printf("\tCPU %d: Processed %2d has finished\n",
-		// 		id ,proc->pid);
-		// 	remove_pcb(proc);
-		// 	proc = NULL;
-		// 	time_left = 0;
-		// }
 		next_slot(timer_id);
 	}
 	detach_event(timer_id);
@@ -236,10 +231,9 @@ static void read_config(const char * path) {
 	// ????????????????????????????????????
 #endif
 #endif
-
+	waiting_time = (int*)malloc(sizeof(int) * (num_processes + 1));
 #ifdef CFS_SCHED
 	ld_processes.niceness = (int*)malloc(sizeof(int) * num_processes);
-	waiting_time = (int*)malloc(sizeof(int) * (num_processes + 1));
 #elif MLQ_SCHED
 	ld_processes.prio = (unsigned long*)
 		malloc(sizeof(unsigned long) * num_processes);
@@ -254,7 +248,10 @@ static void read_config(const char * path) {
 		fscanf(file, "%lu %s %d\n", &ld_processes.start_time[i], proc,
 			&ld_processes.niceness[i]);
 #elif MLQ_SCHED
-		fscanf(file, "%lu %s %lu\n", &ld_processes.start_time[i], proc, &ld_processes.prio[i]);
+		int prio;
+		fscanf(file, "%lu %s %d\n", &ld_processes.start_time[i], proc, &prio);
+		if (prio < 0) prio += 20;
+		ld_processes.prio[i] = prio;
 #else
 		fscanf(file, "%lu %s\n", &ld_processes.start_time[i], proc);
 #endif
@@ -382,6 +379,7 @@ int main(int argc, char * argv[]) {
 	free(args);
 	free(cpu);
 
+	printf("Swap count: %d\n", swap);
 	return 0;
 
 }

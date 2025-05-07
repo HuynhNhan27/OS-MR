@@ -72,7 +72,9 @@
                 proc->pc = proc->code->size;
              }
              else {
-                remove_pcb(proc);
+                remove_proc(proc_queue, proc);
+                delete_pcb(proc);
+                free(proc);
              }
              ++count;
          }

@@ -12,6 +12,7 @@ pthread_mutex_t queue_lock;
 
 static struct queue_t running_list;
 static int target_latency;
+static int time_slot;
 
 #ifdef CFS_SCHED
 static struct RBTree *pcb_tree;
@@ -39,6 +40,7 @@ static int slot[MAX_PRIO];
 void init_scheduler(int time_slot_num) {
 #ifdef CFS_SCHED
 	initializeRBTree(&pcb_tree, compare);
+	target_latency = time_slot_num;
 #elif MLQ_SCHED
     int i ;
 
@@ -46,10 +48,10 @@ void init_scheduler(int time_slot_num) {
 		mlq_ready_queue[i].size = 0;
 		slot[i] = MAX_PRIO - i; 
 	}
+	time_slot = time_slot_num;
 #endif
 	ready_queue.size = 0;
 	run_queue.size = 0;
-	target_latency = time_slot_num;
 	pthread_mutex_init(&queue_lock, NULL);
 }
 //////////////////////////////////////////////////////////////////////////////////////
@@ -146,7 +148,7 @@ struct pcb_t * get_mlq_proc(void) {
 			if (proc_time_slot > time_slot) proc_time_slot = time_slot;
 
 			slot[i] -= proc_time_slot;
-			proc->time_slot = proc_time_slot;
+			proc->time_slice = proc_time_slot;
 			reset_slot = 1;
 			break;
 		}
