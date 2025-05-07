@@ -17,6 +17,7 @@ static int num_cpus;
 static int done = 0;
 static int finished = 0;
 static int swap = 0;
+static int isNegative = 0;
 
 #ifdef MM_PAGING
 static int memramsz;
@@ -250,7 +251,8 @@ static void read_config(const char * path) {
 #elif MLQ_SCHED
 		int prio;
 		fscanf(file, "%lu %s %d\n", &ld_processes.start_time[i], proc, &prio);
-		if (prio < 0) prio += 20;
+		if (prio < 0) isNegative = 1;
+		if (isNegative) prio += 20;
 		ld_processes.prio[i] = prio;
 #else
 		fscanf(file, "%lu %s\n", &ld_processes.start_time[i], proc);

@@ -1,8 +1,6 @@
-make clean
-make all
-
+#!/bin/bash
 case $1 in
-    "all")
+    "run")
         for FILE in input/*; do
             if [ -f "$FILE" ]; then
                 FILE_NAME=$(basename "$FILE")
@@ -11,6 +9,12 @@ case $1 in
                 echo "----------------------------------------"
             fi
         done
+        ;;
+    "make")
+        echo "Cleaning up..."
+        make clean
+        echo "Makeing all..."
+        make all
         ;;
     *)
         FILE_PATH="input/$1"
