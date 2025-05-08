@@ -381,7 +381,7 @@ int main(int argc, char * argv[]) {
 	free(args);
 	free(cpu);
 
-	printf("Swap count: %d\n", swap);
+	printf("Switch count: %d\n", swap);
 	return 0;
 
 }

@@ -41,12 +41,12 @@ Input format của CFS vẫn được giữ nguyên như MLQ nên thầy/cô có
 | Độ phù hợp             | Phù hợp với hệ thống tương tác                   | Phù hợp với hệ thống thời gian thực (real-time)        |
 | Độ phức tạp hiện thực  | Khó hơn, nhất là cây đỏ đen                      | Dễ hiện thực hơn                                       |
 
-Nhóm không so sánh **Turnaround Time (TAT)** giữa hai mô hình vì hệ điều hành hiện thực đơn giản, không tính chi phí Context Switch. Do đó, cả hai mô hình đều có thể đạt TAT tối thiểu bằng cách giảm `target_latency` hoặc `time_slot` để mỗi lần process chỉ được phép chạy 1 lệnh.
+Nhóm không so sánh **Total Time** giữa hai mô hình vì hệ điều hành hiện thực đơn giản, không tính chi phí Context Switch. Do đó, cả hai mô hình đều có thể đạt Total Time tối thiểu bằng cách giảm `target_latency` hoặc `time_slot` để mỗi lần process chỉ được phép chạy 1 lệnh.
 
 ---
 
 ## Các cải tiến thêm ngoài yêu cầu
 
-- Thêm phần in ra TAT và Waiting Time sau khi chương trình kết thúc.
+- Thêm phần in ra Total Time và Waiting Time sau khi chương trình kết thúc.
 - Mô hình MLQ giờ đây có thể nhận giá trị `prio` âm (tự động cộng thêm 20 nếu phát hiện có prio âm) để chạy chung test với CFS.
 - Syscall `killall` đã được điều chỉnh để hoạt động trên cả mô hình CFS.
