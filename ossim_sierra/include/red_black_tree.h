@@ -23,4 +23,5 @@ int initializeRBTree(struct RBTree **tree, int (*compare)(struct pcb_t *, struct
 int insertRBTree(struct RBTree *tree, struct pcb_t *data);
 int removeminRBTree(struct RBTree *tree, struct pcb_t **data);
 int removeRBTree(struct RBTree* tree, int (*findFunc)(struct pcb_t*), struct pcb_t** data);
+int traverseRBTree(struct RBTree* tree, void (*func)(struct pcb_t*));
 #endif // RED_BLACK_TREE_H
