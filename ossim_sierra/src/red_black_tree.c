@@ -315,29 +315,18 @@ int removeRBTree(struct RBTree* tree, int (*findFunc)(struct pcb_t*), struct pcb
     return val;
 }
 
+void inorderRecursive(struct RBNode* node, struct RBNode* TNULL, void (*func)(struct pcb_t*)) {
+    if (node == TNULL) return;
+
+    inorderRecursive(node->left, TNULL, func);  
+    func(node->data);                           
+    inorderRecursive(node->right, TNULL, func); 
+}
+
 int traverseRBTree(struct RBTree* tree, void (*func)(struct pcb_t*)) {
-    if (!tree || !func) return -1;
+    if (!tree || !func || tree->root == tree->TNULL)
+        return -1;
 
-    struct RBNode* stack[100];
-    int top = -1;
-    struct RBNode* current = tree->root;
-
-    if (current == tree->TNULL) return -1;
-
-    stack[++top] = current;
-
-    while (top >= 0) {
-        current = stack[top--];
-
-        if (current == tree->TNULL) continue;
-
-        func(current->data);
-
-        if (current->right != tree->TNULL)
-            stack[++top] = current->right;
-        if (current->left != tree->TNULL)
-            stack[++top] = current->left;
-    }
-
-    return -1;
+    inorderRecursive(tree->root, tree->TNULL, func);
+    return 1;
 }
